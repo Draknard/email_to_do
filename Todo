@@ -1,0 +1,27 @@
+import win32com.client as win32
+import datetime
+
+# Create object of Outlook application
+outlook = win32.Dispatch('outlook.application')
+
+# Get the default task folder
+tasks = outlook.GetNamespace('MAPI').GetDefaultFolder(13)
+
+# Get the tasks due today
+today = datetime.date.today()
+due_today = tasks.Items.Restrict("[DueDate] = '{0}'".format(today.strftime('%m/%d/%Y')))
+
+# Generate an HTML list of tasks with hyperlinks to each task
+html = '<html><body>'
+for task in due_today:
+    html += '<p><a href="{0}">{1}</a></p>'.format(task.GetInspector.ModifiedFormPages("Task").Controls("InternetPage").Value, task.Subject)
+html += '</body></html>'
+
+# Create a new email message and set the recipient, subject, and body
+message = outlook.CreateItem(0)
+message.To = 'your_email@example.com'
+message.Subject = 'To-Do List for {0}'.format(today.strftime('%m/%d/%Y'))
+message.HTMLBody = html
+
+# Send the email
+message.Send()
